@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#38212a">
+    <meta name="description" content="An animated rose garden at golden hour.">
+    <title>Rose Garden</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <script src="script.js" defer></script>
+  </head>
+  <body>
+    <canvas class="garden" aria-hidden="true"></canvas>
+    <div class="shade" aria-hidden="true"></div>
+    <canvas class="foliage" aria-hidden="true"></canvas>
+    <main class="scroll-space">
+      <section class="video-finale" aria-labelledby="video-finale-title">
+        <p class="video-finale-eyebrow">Little moments, kept close</p>
+        <h1 id="video-finale-title">Our favorite memories</h1>
+        <div class="video-gallery">
+          <video controls autoplay muted loop playsinline preload="auto" aria-label="Memory video one">
+            <source src="ourlovestory/long_distance_love_site/assets/photos/vids/1d33f110-63c3-47c8-adeb-45ff157a0220.mp4" type="video/mp4">
+            Your browser does not support video playback.
+          </video>
+          <video controls autoplay muted loop playsinline preload="auto" aria-label="Memory video two">
+            <source src="ourlovestory/long_distance_love_site/assets/photos/vids/4804de7b-01d6-4ee2-bf98-de380a2855f3.mp4" type="video/mp4">
+            Your browser does not support video playback.
+          </video>
+          <video controls autoplay muted loop playsinline preload="auto" aria-label="Memory video three">
+            <source src="ourlovestory/long_distance_love_site/assets/photos/vids/8b0a2750-6ac8-4822-866e-e61b28aa9026.mp4" type="video/mp4">
+            Your browser does not support video playback.
+          </video>
+        </div>
+      </section>
+    </main>
+    <section class="letter-gate" id="letter-gate" role="dialog" aria-modal="true" aria-label="A letter for you">
+      <div class="envelope-view" id="envelope-view">
+        <p class="letter-eyebrow">A little something for you</p>
+        <button class="envelope" id="open-letter" type="button" aria-expanded="false" aria-controls="love-letter">
+          <span class="envelope-flap" aria-hidden="true"></span>
+          <span class="envelope-heart" aria-hidden="true">♥</span>
+          <span class="envelope-label">Open your letter</span>
+        </button>
+      </div>
+      <article class="love-letter" id="love-letter" hidden>
+        <p class="letter-eyebrow">To my favorite person</p>
+        <h1 id="letter-title">My love,</h1>
+        <p>I made this little garden just for you. Take your time wandering through it. Every flower is a reminder of how much happiness you bring into my life. Wherever life takes us, you will always be my favorite place to come home to.</p>
+        <p class="letter-signoff">With all my love, always <span aria-hidden="true">♥</span></p>
+        <button class="letter-continue" id="finish-letter" type="button">Done</button>
+      </article>
+    </section>
+  </body>
+</html>

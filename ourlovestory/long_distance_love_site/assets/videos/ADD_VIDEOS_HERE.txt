@@ -1,0 +1,1 @@
+Put your personal video files in this folder, then add a <video> element to index.html (see README.md).

@@ -9,13 +9,15 @@
   const openLetterButton = document.querySelector("#open-letter");
   const loveLetter = document.querySelector("#love-letter");
   const finishLetterButton = document.querySelector("#finish-letter");
+  const roadsideLayer = document.querySelector("#roadside-gallery");
+  const roadJourney = document.querySelector("#road-journey");
+  const memoryDialog = document.querySelector("#memory-dialog");
+  const memoryViewerImage = document.querySelector("#memory-viewer-image");
+  const memoryCaption = document.querySelector("#memory-caption");
+  const memoryCloseButton = document.querySelector("#memory-close");
   let ctx = sceneContext;
   const capybaraImage = new Image();
   capybaraImage.src = new URL("./ourlovestory/long_distance_love_site/assets/photos/cappy.png", window.location.href).href;
-  const roadsidePhotos = Array.from({ length: 58 }, (_, index) => {
-    const pairIndex = Math.floor(index / 2);
-    return { image: new Image(), z: 20 + pairIndex * 4.45 + (index % 2) * .25, index, shownAt: null };
-  });
 
   const plants = [];
   const petals = [];
@@ -29,8 +31,44 @@
   let pointerX = 0;
   let pointerTarget = 0;
   let lastTime = 0;
-  let presentationFrame = 0;
-  let savedScrollBehavior = "";
+
+  const photoCaptions = [
+    "A little moment I'll keep close.",
+    "One of my favorite pieces of us.",
+    "A memory that still makes me smile.",
+    "A lovely day, made better by you.",
+    "Another moment I treasure with you.",
+    "Somewhere I'd always go back to.",
+  ];
+  const roadsidePhotos = Array.from({ length: 58 }, (_, index) => {
+    const button = document.createElement("button");
+    button.className = "roadside-photo";
+    button.type = "button";
+    button.setAttribute("aria-label", `Open memory photo ${index + 1}`);
+    button.hidden = true;
+
+    const frame = document.createElement("span");
+    frame.className = "roadside-photo-frame";
+    const image = document.createElement("img");
+    image.alt = "";
+    image.loading = "lazy";
+    image.decoding = "async";
+    image.src = new URL(`./ourlovestory/long_distance_love_site/assets/photos/pic/${index + 1}.jpg`, window.location.href).href;
+    frame.append(image);
+    button.append(frame);
+    button.addEventListener("click", () => openMemory(button, image, index));
+    roadsideLayer.append(button);
+
+    const pairIndex = Math.floor(index / 2);
+    return {
+      button,
+      image,
+      index,
+      side: index % 2 === 0 ? 1 : -1,
+      z: 20 + pairIndex * 4.45 + (index % 2) * .25,
+      shown: false,
+    };
+  });
 
   let seed = 81427;
   const random = () => {
@@ -94,51 +132,122 @@
   }
 
   function updateScroll() {
-    const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
-    scrollProgress = maxScroll > 0 ? window.scrollY / maxScroll : 0;
+    const roadDistance = Math.max(1, roadJourney.offsetHeight - window.innerHeight);
+    scrollProgress = Math.max(0, Math.min(1, window.scrollY / roadDistance));
+    roadsideLayer.classList.toggle("is-away", window.scrollY > roadDistance + 1);
+    if (width && height) {
+      const cameraZ = 5 + scrollProgress * 125;
+      layoutRoadsidePhotos(cameraZ, pathCenter(cameraZ) + pointerX * .6, height * .92, height * .34, 1.65);
+    }
   }
 
-  function restoreScrollBehavior() {
-    document.documentElement.style.scrollBehavior = savedScrollBehavior;
+  function openMemory(button, image, index) {
+    const sourceBounds = button.getBoundingClientRect();
+    memoryViewerImage.src = image.src;
+    memoryViewerImage.alt = `Memory photo ${index + 1} of 58`;
+    memoryCaption.textContent = photoCaptions[index % photoCaptions.length];
+    memoryDialog.classList.remove("is-closing");
+    memoryDialog.showModal();
+
+    const animateImage = () => {
+      if (!memoryDialog.open) return;
+      const targetBounds = memoryViewerImage.getBoundingClientRect();
+      if (!targetBounds.width || !targetBounds.height) return;
+      const offsetX = sourceBounds.left - targetBounds.left;
+      const offsetY = sourceBounds.top - targetBounds.top;
+      memoryViewerImage.animate([
+        {
+          opacity: .7,
+          transform: `translate(${offsetX}px, ${offsetY}px) scale(${sourceBounds.width / targetBounds.width}, ${sourceBounds.height / targetBounds.height})`,
+        },
+        { opacity: 1, transform: "translate(0, 0) scale(1)" },
+      ], {
+        duration: prefersReducedMotion.matches ? 1 : 560,
+        easing: "cubic-bezier(.2,.8,.2,1)",
+      });
+    };
+
+    if (memoryViewerImage.complete && memoryViewerImage.naturalWidth) {
+      requestAnimationFrame(animateImage);
+    } else {
+      memoryViewerImage.addEventListener("load", animateImage, { once: true });
+    }
   }
 
-  function stopPresentation() {
-    if (!presentationFrame) return;
-    cancelAnimationFrame(presentationFrame);
-    presentationFrame = 0;
-    restoreScrollBehavior();
-  }
-
-  function startPresentation() {
-    document.documentElement.classList.remove("letter-locked");
-    letterGate.hidden = true;
-    if (prefersReducedMotion.matches) {
-      window.scrollTo(0, document.documentElement.scrollHeight);
-      updateScroll();
-      restoreScrollBehavior();
+  function closeMemory() {
+    if (!memoryDialog.open || memoryDialog.classList.contains("is-closing")) return;
+    memoryDialog.classList.add("is-closing");
+    if (document.visibilityState === "hidden") {
+      memoryDialog.close();
+      memoryDialog.classList.remove("is-closing");
+      memoryViewerImage.removeAttribute("src");
       return;
     }
-
-    const duration = 32000;
-    let startedAt = 0;
-    const advance = (time) => {
-      if (!startedAt) startedAt = time;
-      const progress = Math.min(1, (time - startedAt) / duration);
-      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
-      window.scrollTo(0, maxScroll * progress);
-      if (progress < 1) {
-        presentationFrame = requestAnimationFrame(advance);
-      } else {
-        presentationFrame = 0;
-        restoreScrollBehavior();
-      }
+    const duration = prefersReducedMotion.matches ? 1 : 220;
+    const animation = memoryDialog.animate(
+      [{ opacity: 1, transform: "scale(1)" }, { opacity: 0, transform: "scale(.94)" }],
+      { duration, easing: "ease-in" },
+    );
+    let closed = false;
+    const finishClose = () => {
+      if (closed) return;
+      closed = true;
+      if (memoryDialog.open) memoryDialog.close();
+      memoryDialog.classList.remove("is-closing");
+      memoryViewerImage.removeAttribute("src");
     };
-    presentationFrame = requestAnimationFrame(advance);
+    animation.onfinish = finishClose;
+    window.setTimeout(finishClose, duration + 100);
+  }
+
+  function layoutRoadsidePhotos(cameraZ, cameraX, focal, horizon, cameraHeight) {
+    const targetDepth = 15;
+    const pairSpacing = 4.45;
+    const isMobile = width <= 700;
+
+    for (const photo of roadsidePhotos) {
+      const depth = photo.z - cameraZ;
+      if (depth <= 1 || depth > 132 || Math.abs(depth - targetDepth) > pairSpacing / 2 + .1) {
+        photo.button.hidden = true;
+        photo.shown = false;
+        continue;
+      }
+
+      const scaleEstimate = focal / depth;
+      const frameWidth = Math.min(2.5, width * (isMobile ? .2 : .1) / scaleEstimate);
+      const frameHeight = frameWidth * 1.36;
+      const roadHalfWidth = 1.1 + depth * .035;
+      const photoOffset = isMobile ? 1.15 : 3.2;
+      const x = pathCenter(photo.z) + photo.side * (roadHalfWidth + frameWidth / 2 + photoOffset);
+      const point = project(x, photo.z, cameraZ, cameraX, focal, horizon, cameraHeight);
+      if (!point || point.y < horizon || point.y > height + 100) {
+        photo.button.hidden = true;
+        photo.shown = false;
+        continue;
+      }
+
+      const scaledWidth = point.scale * frameWidth;
+      const scaledHeight = point.scale * frameHeight;
+      const left = Math.max(0, Math.min(width - scaledWidth, point.x - scaledWidth / 2));
+
+      photo.button.hidden = false;
+      photo.button.style.left = `${left}px`;
+      const photoLift = isMobile ? point.scale * 1.45 : 0;
+      photo.button.style.top = `${point.y - scaledHeight - photoLift}px`;
+      photo.button.style.width = `${scaledWidth}px`;
+      photo.button.style.height = `${scaledHeight}px`;
+      photo.button.style.zIndex = String(Math.round(point.scale));
+      if (!photo.shown) photo.button.classList.add("is-visible");
+      photo.shown = true;
+    }
   }
 
   function finishReading() {
     letterGate.classList.add("is-leaving");
-    window.setTimeout(startPresentation, prefersReducedMotion.matches ? 0 : 650);
+    window.setTimeout(() => {
+      document.documentElement.classList.remove("letter-locked");
+      letterGate.hidden = true;
+    }, prefersReducedMotion.matches ? 0 : 650);
   }
 
   function pathCenter(z) {
@@ -398,86 +507,6 @@
     }
   }
 
-  function drawRoadsidePhotos(cameraZ, cameraX, focal, horizon, cameraHeight, time) {
-    const targetDepth = 15;
-    const pairSpacing = 4.45;
-    const pairCount = roadsidePhotos.length / 2;
-    const pairIndex = Math.max(0, Math.min(
-      pairCount - 1,
-      Math.round((cameraZ + targetDepth - 20) / pairSpacing),
-    ));
-
-    for (let side = -1; side <= 1; side += 2) {
-      const photo = roadsidePhotos[pairIndex * 2 + (side < 0 ? 1 : 0)];
-      const depth = photo.z - cameraZ;
-      if (depth <= 1 || Math.abs(depth - targetDepth) > pairSpacing / 2 + .1) continue;
-      if (!photo.image.src) {
-        photo.image.src = new URL(`./ourlovestory/long_distance_love_site/assets/photos/pic/${photo.index + 1}.jpg`, window.location.href).href;
-        continue;
-      }
-      if (!photo.image.complete || !photo.image.naturalWidth) continue;
-
-      const scaleEstimate = focal / depth;
-      const frameWidth = Math.min(2.5, width * .1 / scaleEstimate);
-      const frameHeight = frameWidth * 1.36;
-      const roadHalfWidth = 1.1 + depth * .035;
-      const x = pathCenter(photo.z) + side * (roadHalfWidth + frameWidth / 2 + 3.2);
-      const point = project(x, photo.z, cameraZ, cameraX, focal, horizon, cameraHeight);
-      if (!point || point.y < horizon || point.y > height + 100) continue;
-
-      const scaledWidth = point.scale * frameWidth;
-      const scaledHeight = point.scale * frameHeight;
-      const left = point.x - scaledWidth / 2;
-      const top = point.y - scaledHeight;
-      if (left > width || left + scaledWidth < 0) continue;
-      const frame = Math.max(1, point.scale * .13);
-      const inset = Math.max(.8, point.scale * .1);
-      const availableWidth = scaledWidth - frame * 2 - inset * 2;
-      const availableHeight = scaledHeight - frame * 2 - inset * 2;
-      const imageRatio = photo.image.naturalWidth / photo.image.naturalHeight;
-      const imageWidth = Math.min(availableWidth, availableHeight * imageRatio);
-      const imageHeight = Math.min(availableHeight, availableWidth / imageRatio);
-      if (photo.shownAt === null) photo.shownAt = time;
-      const motionProgress = prefersReducedMotion.matches
-        ? 1
-        : Math.min(1, (time - photo.shownAt) / 650);
-      const easedProgress = 1 - Math.pow(1 - motionProgress, 3);
-      const popScale = .78 + easedProgress * .22;
-      const popLift = point.scale * (1 - easedProgress) * .28;
-
-      ctx.save();
-      ctx.globalAlpha = easedProgress;
-      ctx.translate(point.x, point.y - popLift);
-      ctx.scale(popScale, popScale);
-      ctx.strokeStyle = "#74523f";
-      ctx.lineWidth = Math.max(1.5, point.scale * .16);
-      ctx.beginPath();
-      ctx.moveTo(0, -point.scale * .15);
-      ctx.lineTo(0, point.scale * .8);
-      ctx.stroke();
-
-      ctx.shadowColor = "rgba(36, 24, 28, .42)";
-      ctx.shadowBlur = Math.max(3, point.scale * .65);
-      ctx.shadowOffsetY = Math.max(2, point.scale * .25);
-      ctx.fillStyle = "#d6b386";
-      ctx.fillRect(-scaledWidth / 2, -scaledHeight, scaledWidth, scaledHeight);
-      ctx.shadowColor = "transparent";
-      ctx.fillStyle = "#4a3435";
-      ctx.fillRect(-scaledWidth / 2 + frame, -scaledHeight + frame, scaledWidth - frame * 2, scaledHeight - frame * 2);
-      ctx.drawImage(
-        photo.image,
-        -imageWidth / 2,
-        -scaledHeight + (scaledHeight - imageHeight) / 2,
-        imageWidth,
-        imageHeight,
-      );
-      ctx.strokeStyle = "rgba(255, 237, 208, .88)";
-      ctx.lineWidth = Math.max(.8, point.scale * .08);
-      ctx.strokeRect(-scaledWidth / 2, -scaledHeight, scaledWidth, scaledHeight);
-      ctx.restore();
-    }
-  }
-
   function drawChibi(point, time, character, phase) {
     const scale = point.scale * .58;
     const stride = Math.sin(time * .006 + phase);
@@ -566,10 +595,18 @@
     }
 
     const armSwing = stride * .2;
-    drawLimb(-.39, -1.42 - bounce, -.52 - armSwing, -.78, .24,
+    const leftHandX = character.holdSide === -1 ? -.4 : -.52 - armSwing;
+    const rightHandX = character.holdSide === 1 ? .4 : .52 + armSwing;
+    drawLimb(-.39, -1.42 - bounce, leftHandX, -.78, .24,
       character.sleeveLight, character.sleeves, character.sleeveShade);
-    drawLimb(.39, -1.42 - bounce, .52 + armSwing, -.78, .24,
+    drawLimb(.39, -1.42 - bounce, rightHandX, -.78, .24,
       character.sleeveLight, character.sleeves, character.sleeveShade);
+    if (character.holdSide) {
+      ctx.fillStyle = character.skinLight;
+      ctx.beginPath();
+      ctx.arc(character.holdSide < 0 ? -.4 : .4, -.78, .085, 0, Math.PI * 2);
+      ctx.fill();
+    }
 
     const bodyGradient = ctx.createLinearGradient(-.48, -1.64, .48, -.76);
     bodyGradient.addColorStop(0, character.sleeveLight);
@@ -717,11 +754,11 @@
 
   function drawWalkers(cameraZ, cameraX, focal, horizon, cameraHeight, time) {
     const firstZ = cameraZ + 8;
-    const secondZ = firstZ + .55;
+    const centerX = pathCenter(firstZ);
     const walkers = [
       {
         z: firstZ,
-        x: pathCenter(firstZ) - .82,
+        x: centerX - .4,
         character: {
           hair: "#332a2b",
           hairLight: "#73504a",
@@ -741,12 +778,13 @@
           pantsShade: "#354b68",
           shoes: "#f4e8d8",
           shoeShade: "#655153",
+          holdSide: 1,
         },
         phase: 0,
       },
       {
-        z: secondZ,
-        x: pathCenter(secondZ) - .02,
+        z: firstZ,
+        x: centerX + .4,
         character: {
           hair: "#29252a",
           hairLight: "#65504d",
@@ -766,8 +804,9 @@
           pantsShade: "#3d5574",
           shoes: "#f6eee3",
           shoeShade: "#74646a",
+          holdSide: -1,
         },
-        phase: Math.PI,
+        phase: 0,
       },
     ];
 
@@ -870,8 +909,9 @@
     for (const plant of plants) {
       drawPlant(plant, cameraZ, cameraX, focal, horizon, cameraHeight, time, pond);
     }
-    drawRoadsidePhotos(cameraZ, cameraX, focal, horizon, cameraHeight, time);
+    drawWalkers(cameraZ, cameraX, focal, horizon, cameraHeight, currentProgress * 36000);
     ctx = sceneContext;
+    layoutRoadsidePhotos(cameraZ, cameraX, focal, horizon, cameraHeight);
     drawDriftingPetals(time);
 
     requestAnimationFrame(render);
@@ -891,17 +931,15 @@
     finishLetterButton.focus();
   });
   finishLetterButton.addEventListener("click", finishReading);
-  for (const eventName of ["wheel", "touchstart"]) {
-    window.addEventListener(eventName, stopPresentation, { passive: true });
-  }
-  window.addEventListener("keydown", (event) => {
-    if (["ArrowDown", "ArrowUp", "PageDown", "PageUp", "Home", "End", " "].includes(event.key)) {
-      stopPresentation();
-    }
+  memoryCloseButton.addEventListener("click", closeMemory);
+  memoryDialog.addEventListener("cancel", (event) => {
+    event.preventDefault();
+    closeMemory();
+  });
+  memoryDialog.addEventListener("click", (event) => {
+    if (event.target === memoryDialog) closeMemory();
   });
   if ("scrollRestoration" in history) history.scrollRestoration = "manual";
-  savedScrollBehavior = document.documentElement.style.scrollBehavior;
-  document.documentElement.style.scrollBehavior = "auto";
   window.scrollTo(0, 0);
   window.addEventListener("pageshow", () => {
     window.scrollTo(0, 0);

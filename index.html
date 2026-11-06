@@ -11,31 +11,86 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Playfair+Display:wght@500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
     <script src="script.js" defer></script>
+    <script src="slot-game.js" defer></script>
+    <script src="music.js" defer></script>
   </head>
   <body>
     <canvas class="garden" aria-hidden="true"></canvas>
     <div class="shade" aria-hidden="true"></div>
     <canvas class="foliage" aria-hidden="true"></canvas>
+    <div class="roadside-gallery-layer" id="roadside-gallery" aria-label="Photographs along the road"></div>
     <main class="scroll-space">
+      <section class="road-journey" id="road-journey" aria-label="A road of shared memories"></section>
       <section class="video-finale" aria-labelledby="video-finale-title">
-        <p class="video-finale-eyebrow">Little moments, kept close</p>
-        <h1 id="video-finale-title">Our favorite memories</h1>
-        <div class="video-gallery">
-          <video controls autoplay muted loop playsinline preload="auto" aria-label="Memory video one">
-            <source src="ourlovestory/long_distance_love_site/assets/photos/vids/1d33f110-63c3-47c8-adeb-45ff157a0220.mp4" type="video/mp4">
-            Your browser does not support video playback.
-          </video>
-          <video controls autoplay muted loop playsinline preload="auto" aria-label="Memory video two">
-            <source src="ourlovestory/long_distance_love_site/assets/photos/vids/4804de7b-01d6-4ee2-bf98-de380a2855f3.mp4" type="video/mp4">
-            Your browser does not support video playback.
-          </video>
-          <video controls autoplay muted loop playsinline preload="auto" aria-label="Memory video three">
-            <source src="ourlovestory/long_distance_love_site/assets/photos/vids/8b0a2750-6ac8-4822-866e-e61b28aa9026.mp4" type="video/mp4">
-            Your browser does not support video playback.
-          </video>
+        <div class="game-play" id="game-play">
+          <header class="game-heading">
+            <p class="video-finale-eyebrow">Little moments, kept close</p>
+            <h1 id="video-finale-title">A Little Surprise for You <span aria-hidden="true">&#10084;</span></h1>
+            <p class="game-subtitle">Three chances, three surprises, and memories waiting to be unlocked.</p>
+          </header>
+
+          <div class="game-machine-slot" id="game-machine-slot">
+            <div class="slot-machine" id="slot-machine" aria-label="Three-reel lucky spin machine">
+              <div class="machine-topline"><span>LUCKY IN LOVE</span><span class="topline-star" aria-hidden="true">&#10022;</span><span>NO. 003</span></div>
+              <div class="reel-frame" aria-label="Slot reels">
+                <span class="reel-marker reel-marker-left" aria-hidden="true">&#10097;</span>
+                <div class="slot-reel-window"><div class="slot-reel-strip" data-reel="0"><span>&#10084;</span></div></div>
+                <div class="slot-reel-window"><div class="slot-reel-strip" data-reel="1"><span>&#10022;</span></div></div>
+                <div class="slot-reel-window"><div class="slot-reel-strip" data-reel="2"><span>&#10047;</span></div></div>
+                <span class="reel-marker reel-marker-right" aria-hidden="true">&#10097;</span>
+              </div>
+              <div class="machine-lowerline" aria-hidden="true"><span></span><i>&#10084;</i><span></span></div>
+              <div class="machine-controls">
+                <p class="spin-counter" id="spin-counter" aria-live="polite">3 FREE SPINS LEFT</p>
+                <button class="spin-button" id="spin-button" type="button"><span aria-hidden="true">&#10022;</span> SPIN <span aria-hidden="true">&#10022;</span></button>
+                <p class="spin-status" id="spin-status" aria-live="polite">One spin, one special memory.</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="reward-shelf" id="reward-shelf" aria-label="Mystery rewards">
+            <div class="reward-cards" id="reward-cards"></div>
+          </div>
         </div>
+
+        <section class="final-screen" id="final-screen" aria-labelledby="final-title" hidden>
+          <p class="video-finale-eyebrow">Kept close, forever</p>
+          <h1 id="final-title">ALL THREE SURPRISES ARE YOURS! <span aria-hidden="true">&#10084;</span></h1>
+          <p class="game-subtitle">Three little surprises, three special memories, all yours to keep.</p>
+          <div class="final-machine-slot" id="final-machine-slot"></div>
+          <div class="final-confetti" aria-hidden="true"></div>
+          <div class="video-gallery" id="unlocked-gallery"></div>
+        </section>
+
+        <dialog class="gift-dialog" id="gift-dialog" aria-labelledby="gift-title">
+          <div class="gift-stage">
+            <div class="gift-sparkles" id="gift-sparkles" aria-hidden="true"></div>
+            <p class="video-finale-eyebrow" id="gift-step">A little something for you</p>
+            <h2 id="gift-title">Your surprise is waiting</h2>
+            <div class="mystery-gift" id="mystery-gift" aria-hidden="true">
+              <span class="gift-lid"></span><span class="gift-box-body"></span><span class="gift-ribbon"></span>
+            </div>
+            <p class="gift-caption" id="gift-caption">I wonder what could be inside...</p>
+            <button class="open-surprise-button" id="open-surprise" type="button">OPEN YOUR SURPRISE <span aria-hidden="true">&#10084;</span></button>
+          </div>
+        </dialog>
+
+        <dialog class="video-dialog" id="video-dialog" aria-labelledby="video-message">
+          <button class="dialog-close" id="close-video" type="button" aria-label="Close video">&#10005;</button>
+          <p class="video-reward-message" id="video-message"></p>
+          <div class="reward-video-frame" id="reward-video-frame"></div>
+          <button class="replay-button" id="replay-video" type="button"><span aria-hidden="true">&#8635;</span> REPLAY MEMORY</button>
+        </dialog>
+
       </section>
     </main>
+    <dialog class="memory-dialog" id="memory-dialog" aria-labelledby="memory-caption">
+      <button class="memory-close" id="memory-close" type="button" aria-label="Close memory">&#10005;</button>
+      <figure class="memory-viewer">
+        <img id="memory-viewer-image" alt="">
+        <figcaption id="memory-caption"></figcaption>
+      </figure>
+    </dialog>
     <section class="letter-gate" id="letter-gate" role="dialog" aria-modal="true" aria-label="A letter for you">
       <div class="envelope-view" id="envelope-view">
         <p class="letter-eyebrow">A little something for you</p>
@@ -48,10 +103,24 @@
       <article class="love-letter" id="love-letter" hidden>
         <p class="letter-eyebrow">To my favorite person</p>
         <h1 id="letter-title">My love,</h1>
-        <p>I made this little garden just for you. Take your time wandering through it. Every flower is a reminder of how much happiness you bring into my life. Wherever life takes us, you will always be my favorite place to come home to.</p>
+        <p> Happy 1 year and 9 months, Loveee! 🥹❤️
+
+I made this little website just for you as a special gift. Every detail was created with love to remind you how much you mean to me.
+
+Thank you for all the memories, laughter, and love. No matter what happens, I'll always choose you.
+
+Here's to more months, years, and beautiful memories together.
+
+I love you so much, baby! ❤️
+
+This website is my gift, but my heart will always be yours. 💗</p>
         <p class="letter-signoff">With all my love, always <span aria-hidden="true">♥</span></p>
         <button class="letter-continue" id="finish-letter" type="button">Done</button>
       </article>
     </section>
+    <audio id="background-music" src="ourlovestory/long_distance_love_site/assets/music/ArticMonkeys_-_Secret_Door_(mp3.pm).mp3" loop preload="auto"></audio>
+    <button class="music-toggle" id="music-toggle" type="button" aria-label="Play background music" title="Play background music">
+      <span class="music-toggle-icon" id="music-toggle-icon" aria-hidden="true">&#9654;</span>
+    </button>
   </body>
 </html>
